@@ -1,42 +1,97 @@
+'''
+Recording bằng cmd, khi chạy chương trình:
+- dùng ctr+c để dừng ghi âm
+- bấm enter để kết thúc bài
+'''
+
 import pyaudio
 import wave
+import keyboard
+import time
 
-chunk = 1024  # Record in chunks of 1024 samples
-sample_format = pyaudio.paInt16  # 16 bits per sample
-channels = 2
-fs = 44100  # Record at 44100 samples per second
-seconds = 3
-filename = "output.wav"
+from nltk import sent_tokenize
+from get_content import article_type
 
-p = pyaudio.PyAudio()  # Create an interface to PortAudio
+chunk = 1024
+sample_format = pyaudio.paInt16
+channels = 2 
+fs = 44100
 
-print('Recording')
+def record():
+    p = pyaudio.PyAudio()
+    
+    stream = p.open(format=sample_format, 
+                    channels=channels, 
+                    rate=fs, 
+                    frames_per_buffer=chunk, 
+                    input=True)
+    
+    print("Start recording...")
 
-stream = p.open(format=sample_format,
-                channels=channels,
-                rate=fs,
-                frames_per_buffer=chunk,
-                input=True)
+    frames = []
 
-frames = []  # Initialize array to store frames
+    try:
+        while True:
+            data = stream.read(chunk)
+            frames.append(data)
+    except KeyboardInterrupt:
+        print("Done recording!")
+    except Exception as e:
+        print(str(e))
 
-# Store data in chunks for 3 seconds
-for i in range(0, int(fs / chunk * seconds)):
-    data = stream.read(chunk)
-    frames.append(data)
+    sample_width = p.get_sample_size(sample_format)
 
-# Stop and close the stream 
-stream.stop_stream()
-stream.close()
-# Terminate the PortAudio interface
-p.terminate()
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
 
-print('Finished recording')
+    return sample_width, frames
 
-# Save the recorded data as a WAV file
-wf = wave.open(filename, 'wb')
-wf.setnchannels(channels)
-wf.setsampwidth(p.get_sample_size(sample_format))
-wf.setframerate(fs)
-wf.writeframes(b''.join(frames))
-wf.close()
+def record_to_file(file_path):
+    wf = wave.open(file_path, 'wb')
+    wf.setnchannels(channels)
+    sample_width, frames = record()
+    wf.setsampwidth(sample_width)
+    wf.setframerate(fs)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+
+if __name__ == '__main__':
+    file_path = 'Data/' + article_type + '/'
+    f = open(file_path + 'data.txt', 'r', encoding='utf-8')
+
+    lines = f.readlines()
+    lines = ' '.join(lines)
+    sentences = sent_tokenize(lines) 
+
+    i = 0
+    for sent in sentences:
+        print('='*80)
+        print(sent + '\n')
+        print("Press Ctrl+C to stop the recording")
+
+        record_to_file(file_path + 'out'+ str(i) +'.wav')
+
+        print("Result written to out" + str(i) + ".wav")
+        
+        i += 1
+
+        print('='*80)
+
+        print("Press ENTER if you want to exit recording.")
+        # time.sleep(5)
+        isExit = False
+        while True:
+            try:
+                if keyboard.is_pressed('Enter'):
+                    isExit = True
+                    break
+            except:
+                break
+        
+        if isExit == True:
+            break
+
+
+    print("You haven speech a article! :))")
+   
