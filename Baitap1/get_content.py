@@ -1,39 +1,65 @@
+'''
+module: get_content
+'''
+
 import os
 import string
 from newspaper import Article
 from nltk import sent_tokenize
 
-url = "https://vnexpress.net/thoi-su/them-3-nguoi-nhiem-ncov-tu-buddha-bar-amp-grill-4075317.html"
+# url = "https://vnexpress.net/giao-duc/nhung-tinh-huong-bi-hai-khi-hoc-tu-xa-4077359.html"
 
+# hàm lấy nội dung từ link bài báo và trả về thể loại 
+# và nội dung đã được định dạng lại 
 def get_text(url):
     article = Article(url)
     article.download()
     article.parse()
     
     sentences = sent_tokenize(article.text)
+    sents = []
+    for sent in sentences:
+        if sent is sentences[len(sentences) - 1]:
+            if "..." in sent:
+                sent = sent.replace("...", ".")
+                sent = sent_tokenize(sent)
+                for s in sent:
+                    sents.append(s)
+        elif '\n\n' in sent:
+            sent = sent.split('\n\n')
+            for s in sent:
+                sents.append(s.strip())
+        else:
+            sents.append(sent)
     
+    sentences = sents
     article_type = url.split('/')[3]
     # article_type.split('-').join(' ').capitalize()
 
     return sentences, article_type
 
-def save_to_file(file_path, sentences):
-    f = open(file_path, 'w', encoding='utf-8')
+# def save_to_file(file_path, sentences, url, file_wav):
+#     f = open(file_path, 'w', encoding='utf-8')
     
-    for sentence in sentences:
-        if sentence not in string.whitespace:
-            f.write(sentence + '\n')
+#     f.write(url + '\n')
 
-    f.close()
+#     for sentence in sentences:
+#         if sentence not in string.whitespace:
+#             f.write(sentence + '\n')
 
-sentences, article_type = get_text(url)
+#     f.close()
 
-if __name__ == '__main__':
-    print(sentences)
-    file_path = "Data/" + article_type
+# sentences, article_type = get_text(url)
+# print(sentences)
 
-    if not os.path.exists(file_path):
-        os.makedirs(file_path, exist_ok=True)
+# if __name__ == '__main__':
+#     # print(sentences)
+#     file_path = "Data/" + article_type
 
-    file_path += "/data.txt"
-    save_to_file(file_path, sentences)
+#     if not os.path.exists(file_path):
+#         os.makedirs(file_path, exist_ok=True)
+
+#     file_path += "/data.txt"
+#     save_to_file(file_path, sentences)
+
+# print(sentences)
