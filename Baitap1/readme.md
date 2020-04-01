@@ -2,7 +2,9 @@
 sử dụng pip install package để tải các package còn thiếu
 
 Trước khi chạy: cập nhật thủ công `url` của bài báo (url của các bài báo được sử dụng được liệt kê bên dưới)
+
 Chạy hàm main: python main.py 
+
 Trong lúc chạy:
 - Sử dụng Ctrl+C để kết thúc phiên ghi âm
 - Sử dụng ENTER để kết thúc việc ghi âm
