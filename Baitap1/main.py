@@ -12,12 +12,12 @@ import get_content
 import recording
 
 # link bài báo
-url = "https://vnexpress.net/cuoi/ly-do-bo-khong-moc-sung-3906940.html" 
+url = "https://vnexpress.net/so-hoa/netflix-giam-luu-luong-tai-viet-nam-4078017.html" 
 
 # lấy nội dung, thể loại của bài báo
 sentences, article_type = get_content.get_text(url)
 
-# print (sentences)
+print (len(sentences))
 
 file_path = "Data/" + article_type
 
