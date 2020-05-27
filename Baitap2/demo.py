@@ -8,7 +8,6 @@ import numpy as np
 import math
 import pickle
 
-
 class Recoder:
 
     def __init__(self, chunk=1024, frmat=pyaudio.paInt16, channels=2, rate=44100, py=pyaudio.PyAudio()):
@@ -27,7 +26,7 @@ class Recoder:
         self.st = 1
  
         # frame
-        self.buttons = tkinter.Frame(self.main, padx=100)
+        self.buttons = tkinter.Frame(self.main, padx=150)
 
         # đóng gói frame để hiển thị được
         self.buttons.pack(fill=tkinter.BOTH)
@@ -39,9 +38,13 @@ class Recoder:
         self.stop_rec = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text='Stop Recording', command=lambda: self.stop_record())
         self.stop_rec.grid(row=0, column=1, padx=5, pady=5)
         self.detect = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text="Predict", command=lambda: self.predict_voice())
-        self.detect.grid(row=0, column=2)
+        self.detect.grid(row=1, column=1)
+        self.play_rec = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text="Play record", command=lambda: self.play_record())
+        self.play_rec.grid(row=1, column=0)
 
         # lable 
+        self.list_words = tkinter.Label(self.main, text="{đường, hai, tiền, y tế, bệnh nhân}")
+        self.list_words.pack(pady=10)
         self.predict_lbl = tkinter.Label(self.main, text="PREDICT")
         self.predict_lbl.pack(pady=10)
         tkinter.mainloop()
@@ -70,8 +73,27 @@ class Recoder:
         self.st = 0
         print("stopping")
 
+    def play_record(self):
+        wf = wave.open("test.wav", 'rb')
+
+        stream = self.p.open(format = self.p.get_format_from_width(wf.getsampwidth()),
+                        channels = wf.getnchannels(),
+                        rate = wf.getframerate(),
+                        output = True)
+
+        data = wf.readframes(self.CHUNK)
+
+        while len(data) > 0:
+            stream.write(data)
+            data = wf.readframes(self.CHUNK)
+
+        stream.stop_stream()
+        stream.close()
+        return
+
     def get_mfcc(self, file_path="test.wav"):
         y, sr = librosa.load(file_path) # read .wav file
+        # yt, index = librosa.effects.trim(y)
         hop_length = math.floor(sr*0.010) # 10ms hop
         win_length = math.floor(sr*0.025) # 25ms frame
         # mfcc is 12 x T matrix
@@ -92,7 +114,7 @@ class Recoder:
         return X.T # hmmlearn use T x N matrix
 
     def predict_voice(self):
-        with open("gmm_hmm1.pkl", "rb") as file:
+        with open("gmm_hmm2.pkl", "rb") as file:
             self.models = pickle.load(file)
 
         O = self.get_mfcc()
