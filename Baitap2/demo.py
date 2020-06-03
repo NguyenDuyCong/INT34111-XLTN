@@ -7,6 +7,10 @@ import librosa
 import numpy as np
 import math
 import pickle
+import soundfile as sf
+import scipy as sp
+import noisereduce as nr
+from noisereduce.generate_noise import band_limited_noise
 
 class Recoder:
 
@@ -27,20 +31,23 @@ class Recoder:
  
         # frame
         self.buttons = tkinter.Frame(self.main, padx=150)
+        self.buttons1 = tkinter.Frame(self.main, padx=100)
 
         # đóng gói frame để hiển thị được
         self.buttons.pack(fill=tkinter.BOTH)
-
+        self.buttons1.pack(fill=tkinter.BOTH)
 
         # Start and Stop buttons
         self.strt_rec = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text='Start Recording', command=lambda: self.start_record())
         self.strt_rec.grid(row=0, column=0)
         self.stop_rec = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text='Stop Recording', command=lambda: self.stop_record())
         self.stop_rec.grid(row=0, column=1, padx=5, pady=5)
-        self.detect = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text="Predict", command=lambda: self.predict_voice())
+        self.detect = tkinter.Button(self.buttons1, width=10, padx=10, pady=5, text="Predict", command=lambda: self.predict_voice())
         self.detect.grid(row=1, column=1)
-        self.play_rec = tkinter.Button(self.buttons, width=10, padx=10, pady=5, text="Play record", command=lambda: self.play_record())
+        self.play_rec = tkinter.Button(self.buttons1, width=10, padx=10, pady=5, text="Play record", command=lambda: self.play_record())
         self.play_rec.grid(row=1, column=0)
+        self.rmv_noise = tkinter.Button(self.buttons1, width=10, padx=10, pady=5, text="Remove noise", command=lambda: self.remove_noise())
+        self.rmv_noise.grid(row=1, column=2)
 
         # lable 
         self.list_words = tkinter.Label(self.main, text="{đường, hai, tiền, y tế, bệnh nhân}")
@@ -113,12 +120,27 @@ class Recoder:
         # return T x 39 (transpose of X)
         return X.T # hmmlearn use T x N matrix
 
+    # def trim_silence(self,y):
+    #     y_trimmed, index = librosa.effects.trim(y, top_db=20, frame_length=2, hop_length=500)
+    #     trimmed_length = librosa.get_duration(y) - librosa.get_duration(y_trimmed)
+    #     return y_trimmed, trimmed_length
+
+    def remove_noise(self):
+        y,sr = librosa.load("test.wav")
+        noise_len = 2 # seconds
+        noise = band_limited_noise(min_freq=2000, max_freq = 12000, samples=len(y), samplerate=sr)*10
+        noise_clip = noise[:sr*noise_len]
+        noise_reduced = nr.reduce_noise(audio_clip=y, noise_clip=noise_clip, prop_decrease=1.0, verbose=False)
+        sf.write('test.wav', noise_reduced, sr)
+        self.predict_lbl['text'] = 'Đã remove noise'
+    
     def predict_voice(self):
-        with open("gmm_hmm2.pkl", "rb") as file:
+        with open("gmm_hmm3.pkl", "rb") as file:
             self.models = pickle.load(file)
 
         O = self.get_mfcc()
         score = {cname: model.score(O, [len(O)]) for cname, model in self.models.items()}
+        print(score)
         inverse = [(value, key) for key, value in score.items()]
         self.predict = max(inverse)[1]
 
